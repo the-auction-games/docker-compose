@@ -1,0 +1,64 @@
+version: '3'
+services:
+  ##########################
+  # Dapr placement service #
+  ##########################
+  placement:
+    image: "daprio/dapr"
+    command: [ "./placement", "-port", "50006" ]
+    ports:
+      - "50006:50006"
+    networks:
+      - dapr-net
+  #####################
+  # Redis State Store #
+  #####################
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    networks:
+      - dapr-net
+  ###################################
+  # Account API: DB + App + Sidecar #
+  ###################################
+  account-api-postgres:
+    image: "account-api-postgres-image"
+    ports:
+      - "5432:5432"
+    environment:
+      PGDATA: /postgres
+    networks:
+      - dapr-net
+  account-api:
+    image: "account-api"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  account-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "accountapi",
+        "-app-port",
+        "8000",
+        "-placement-host-address",
+        "placement:50006",
+        "-components-path",
+        "/account-api-components"
+      ]
+    volumes:
+      - "./account-api-components/:/account-api-components"
+    depends_on:
+      - account-api
+      - account-api-postgres
+    restart: on-failure
+    network_mode: "service:account-api"
+
+networks:
+  dapr-net:
