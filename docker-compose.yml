@@ -50,15 +50,98 @@ services:
         "-placement-host-address",
         "placement:50006",
         "-components-path",
-        "/account-api-components"
+        "/components"
       ]
     volumes:
-      - "./account-api-components/:/account-api-components"
+      - "./dapr-components/account-api/:/components"
     depends_on:
       - account-api
       - account-api-postgres
     restart: on-failure
     network_mode: "service:account-api"
-
+  ####################################
+  # Activity API: DB + App + Sidecar #
+  ####################################
+  activity-api-postgres:
+    image: "activity-api-postgres-image"
+    ports:
+      - "5433:5432"
+    environment:
+      PGDATA: /postgres
+    networks:
+      - dapr-net
+  activity-api:
+    image: "activity-api"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  activity-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "activityapi",
+        "-app-port",
+        "8081",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3502",
+        "-components-path",
+        "/components"
+      ]
+    volumes:
+      - "./dapr-components/activity-api/:/components"
+    depends_on:
+      - activity-api
+      - activity-api-postgres
+    restart: on-failure
+    network_mode: "service:activity-api"
+  ###################################
+  # Auction API: DB + App + Sidecar #
+  ###################################
+  auction-api-mongo:
+    image: "auction-api-mongo-image"
+    ports:
+      - "29999:27017"
+    # environment:
+    #   PGDATA: /postgres
+    networks:
+      - dapr-net
+  auction-api:
+    image: "auction-api"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  auction-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "auctionapi",
+        "-app-port",
+        "8081",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3501",
+        "-components-path",
+        "/components"
+      ]
+    volumes:
+      - "./dapr-components/auction-api/:/components"
+    depends_on:
+      - auction-api
+      - auction-api-mongo
+    restart: on-failure
+    network_mode: "service:auction-api"
 networks:
   dapr-net:
