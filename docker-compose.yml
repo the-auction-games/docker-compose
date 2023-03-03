@@ -22,85 +22,85 @@ services:
   ###################################
   # Account API: DB + App + Sidecar #
   ###################################
-  # account-api-postgres:
-  #   image: "account-api-postgres-image"
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     PGDATA: /postgres
-  #   networks:
-  #     - dapr-net
-  # account-api:
-  #   image: "account-api"
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - placement
-  #   networks:
-  #     - dapr-net
-  # account-api-sidecar:
-  #   image: "daprio/daprd:edge"
-  #   command:
-  #     [
-  #       "./daprd",
-  #       "-app-id",
-  #       "accountapi",
-  #       "-app-port",
-  #       "8000",
-  #       "-placement-host-address",
-  #       "placement:50006",
-  #       "-components-path",
-  #       "/components"
-  #     ]
-  #   volumes:
-  #     - "./dapr-components/account-api/:/components"
-  #   depends_on:
-  #     - account-api
-  #     - account-api-postgres
-  #   restart: on-failure
-  #   network_mode: "service:account-api"
+  account-api-postgres:
+    image: "account-api-postgres-image"
+    ports:
+      - "5432:5432"
+    environment:
+      PGDATA: /postgres
+    networks:
+      - dapr-net
+  account-api:
+    image: "account-api"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  account-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "accountapi",
+        "-app-port",
+        "8000",
+        "-placement-host-address",
+        "placement:50006",
+        "-components-path",
+        "/components"
+      ]
+    volumes:
+      - "./dapr-components/account-api/:/components"
+    depends_on:
+      - account-api
+      - account-api-postgres
+    restart: on-failure
+    network_mode: "service:account-api"
   ####################################
   # Activity API: DB + App + Sidecar #
   ####################################
-  # activity-api-postgres:
-  #   image: "activity-api-postgres-image"
-  #   ports:
-  #     - "5433:5432"
-  #   environment:
-  #     PGDATA: /postgres
-  #   networks:
-  #     - dapr-net
-  # activity-api:
-  #   image: "activity-api"
-  #   ports:
-  #     - "8081:8081"
-  #   depends_on:
-  #     - placement
-  #   networks:
-  #     - dapr-net
-  # activity-api-sidecar:
-  #   image: "daprio/daprd:edge"
-  #   command:
-  #     [
-  #       "./daprd",
-  #       "-app-id",
-  #       "activityapi",
-  #       "-app-port",
-  #       "8081",
-  #       "-placement-host-address",
-  #       "placement:50006",
-  #       "-dapr-http-port",
-  #       "3502",
-  #       "-components-path",
-  #       "/components"
-  #     ]
-  #   volumes:
-  #     - "./dapr-components/activity-api/:/components"
-  #   depends_on:
-  #     - activity-api
-  #     - activity-api-postgres
-  #   restart: on-failure
-  #   network_mode: "service:activity-api"
+  activity-api-postgres:
+    image: "activity-api-postgres-image"
+    ports:
+      - "5433:5432"
+    environment:
+      PGDATA: /postgres
+    networks:
+      - dapr-net
+  activity-api:
+    image: "activity-api"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  activity-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "activityapi",
+        "-app-port",
+        "8081",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3502",
+        "-components-path",
+        "/components"
+      ]
+    volumes:
+      - "./dapr-components/activity-api/:/components"
+    depends_on:
+      - activity-api
+      - activity-api-postgres
+    restart: on-failure
+    network_mode: "service:activity-api"
   ###################################
   # Auction API: DB + App + Sidecar #
   ###################################
@@ -141,5 +141,45 @@ services:
       - auction-api-mongo
     restart: on-failure
     network_mode: "service:auction-api"
+  ###################################
+  # Session API: DB + App + Sidecar #
+  ###################################
+  session-api-redis:
+    image: "redis:alpine"
+    ports:
+      - "9119:6379"
+    networks:
+      - dapr-net
+  session-api:
+    image: "session-api"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  session-api-sidecar:
+    image: "daprio/daprd:edge"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "sessionapi",
+        "-app-port",
+        "3000",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3503",
+        "-components-path",
+        "/components"
+      ]
+    volumes:
+      - "./dapr-components/session-api/:/components"
+    depends_on:
+      - session-api
+      - session-api-redis
+    restart: on-failure
+    network_mode: "service:session-api"
 networks:
   dapr-net:
