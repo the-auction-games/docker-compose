@@ -1,5 +1,14 @@
 version: '3'
 services:
+  ######################
+  # Zipkin | Tx Traces #
+  ######################
+  zipkin:
+    image: "openzipkin/zipkin"
+    ports:
+      - "9411:9411"
+    networks:
+      - dapr-net
   ##########################
   # Dapr placement service #
   ##########################
@@ -8,6 +17,8 @@ services:
     command: [ "./placement", "-port", "50006" ]
     ports:
       - "50006:50006"
+    depends_on:
+      - zipkin
     networks:
       - dapr-net
   #####################
@@ -50,10 +61,13 @@ services:
         "-placement-host-address",
         "placement:50006",
         "-components-path",
-        "/components"
+        "/dapr/components",
+        "-config",
+        "/dapr/config.yaml"
       ]
     volumes:
-      - "./dapr-components/account-api/:/components"
+      - "./dapr/components/account-api/:/dapr/components"
+      - "./dapr/config.yaml:/dapr/config.yaml"
     depends_on:
       - account-api
       - account-api-postgres
@@ -92,10 +106,13 @@ services:
         "-dapr-http-port",
         "3502",
         "-components-path",
-        "/components"
+        "/dapr/components",
+        "-config",
+        "/dapr/config.yaml"
       ]
     volumes:
-      - "./dapr-components/activity-api/:/components"
+      - "./dapr/components/activity-api/:/dapr/components"
+      - "./dapr/config.yaml:/dapr/config.yaml"
     depends_on:
       - activity-api
       - activity-api-postgres
@@ -126,16 +143,19 @@ services:
         "-app-id",
         "auctionapi",
         "-app-port",
-        "8081",
+        "8080",
         "-placement-host-address",
         "placement:50006",
         "-dapr-http-port",
         "3501",
         "-components-path",
-        "/components"
+        "/dapr/components",
+        "-config",
+        "/dapr/config.yaml"
       ]
     volumes:
-      - "./dapr-components/auction-api/:/components"
+      - "./dapr/components/auction-api/:/dapr/components"
+      - "./dapr/config.yaml:/dapr/config.yaml"
     depends_on:
       - auction-api
       - auction-api-mongo
@@ -172,14 +192,53 @@ services:
         "-dapr-http-port",
         "3503",
         "-components-path",
-        "/components"
+        "/dapr/components",
+        "-config",
+        "/dapr/config.yaml"
       ]
     volumes:
-      - "./dapr-components/session-api/:/components"
+      - "./dapr/components/session-api/:/dapr/components"
+      - "./dapr/config.yaml:/dapr/config.yaml"
     depends_on:
       - session-api
       - session-api-redis
     restart: on-failure
     network_mode: "service:session-api"
+  ##################################
+  # Auction Web App: App + Sidecar #
+  ##################################
+  auction-web-app:
+    image: "auction-web-app"
+    ports:
+      - "80:80"
+    depends_on:
+      - placement
+    networks:
+      - dapr-net
+  auction-web-app-sidecar:
+    image: "daprio/daprd:edge"
+    ports:
+      - "3504:3504"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "webapp",
+        "-app-port",
+        "80",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3504",
+        "-config",
+        "/dapr/config.yaml"
+      ]
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
+    depends_on:
+      - auction-web-app
+    restart: on-failure
+    networks:
+      - dapr-net
 networks:
   dapr-net:
