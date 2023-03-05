@@ -1,19 +1,26 @@
 version: '3'
 services:
-  ######################
-  # Zipkin | Tx Traces #
-  ######################
+
+  ################################
+  # Zipkin | Transaction Tracing #
+  ################################
+
   zipkin:
     image: "openzipkin/zipkin"
     ports:
       - "9411:9411"
     networks:
       - dapr-net
+    restart: always
+
   ##########################
-  # Dapr placement service #
+  # Dapr Placement Service #
   ##########################
+
   placement:
     image: "daprio/dapr"
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
     command: [ "./placement", "-port", "50006" ]
     ports:
       - "50006:50006"
@@ -21,224 +28,272 @@ services:
       - zipkin
     networks:
       - dapr-net
-  #####################
-  # Redis State Store #
-  #####################
+    restart: always
+
+  ######################################
+  # Redis | PubSub & Actor State Store #
+  ######################################
+
   redis:
     image: "redis:alpine"
     ports:
       - "6379:6379"
     networks:
       - dapr-net
+    restart: always
+
   ###################################
   # Account API: DB + App + Sidecar #
   ###################################
-  account-api-postgres:
+
+  account-db:
     image: "account-api-postgres-image"
-    ports:
-      - "5432:5432"
     environment:
       PGDATA: /postgres
+    ports:
+      - "5432:5432"
     networks:
       - dapr-net
+    restart: always
+
   account-api:
     image: "account-api"
+    environment:
+      - APP_PORT=8000
+      - SIDECAR_PORT=3500
+      - STATE_STORE_NAME=account-statestore
     ports:
       - "8000:8000"
-    depends_on:
-      - placement
     networks:
       - dapr-net
+    restart: always
+
   account-api-sidecar:
     image: "daprio/daprd:edge"
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
+      - "./dapr/components/:/dapr/components/"
     command:
       [
         "./daprd",
         "-app-id",
-        "accountapi",
+        "account-api",
         "-app-port",
         "8000",
         "-placement-host-address",
         "placement:50006",
-        "-components-path",
-        "/dapr/components",
+        "-dapr-http-port",
+        "3500",
         "-config",
-        "/dapr/config.yaml"
+        "/dapr/config.yaml",
+        "-components-path",
+        "/dapr/components"
       ]
-    volumes:
-      - "./dapr/components/account-api/:/dapr/components"
-      - "./dapr/config.yaml:/dapr/config.yaml"
-    depends_on:
-      - account-api
-      - account-api-postgres
-    restart: on-failure
     network_mode: "service:account-api"
+    depends_on:
+      - placement
+      - account-db
+      - account-api
+    restart: always
+
   ####################################
   # Activity API: DB + App + Sidecar #
   ####################################
-  activity-api-postgres:
+  
+  activity-db:
     image: "activity-api-postgres-image"
-    ports:
-      - "5433:5432"
     environment:
       PGDATA: /postgres
+    ports:
+      - "5433:5432"
     networks:
       - dapr-net
+    restart: always
+  
   activity-api:
     image: "activity-api"
+    environment:
+      - APP_PORT=8080
+      - SIDECAR_PORT=3500
+      - STATE_STORE_NAME=activity-statestore
     ports:
-      - "8081:8081"
-    depends_on:
-      - placement
+      - "8081:8080"
     networks:
       - dapr-net
+    restart: always
+  
   activity-api-sidecar:
     image: "daprio/daprd:edge"
-    command:
-      [
-        "./daprd",
-        "-app-id",
-        "activityapi",
-        "-app-port",
-        "8081",
-        "-placement-host-address",
-        "placement:50006",
-        "-dapr-http-port",
-        "3502",
-        "-components-path",
-        "/dapr/components",
-        "-config",
-        "/dapr/config.yaml"
-      ]
     volumes:
-      - "./dapr/components/activity-api/:/dapr/components"
       - "./dapr/config.yaml:/dapr/config.yaml"
-    depends_on:
-      - activity-api
-      - activity-api-postgres
-    restart: on-failure
-    network_mode: "service:activity-api"
-  ###################################
-  # Auction API: DB + App + Sidecar #
-  ###################################
-  auction-api-mongo:
-    image: "auction-api-mongo-image"
-    ports:
-      - "29999:27017"
-    networks:
-      - dapr-net
-  auction-api:
-    image: "auction-api"
-    ports:
-      - "8080:8080"
-    depends_on:
-      - placement
-    networks:
-      - dapr-net
-  auction-api-sidecar:
-    image: "daprio/daprd:edge"
+      - "./dapr/components/:/dapr/components/"
     command:
       [
         "./daprd",
         "-app-id",
-        "auctionapi",
+        "activity-api",
         "-app-port",
         "8080",
         "-placement-host-address",
         "placement:50006",
         "-dapr-http-port",
-        "3501",
-        "-components-path",
-        "/dapr/components",
+        "3500",
         "-config",
-        "/dapr/config.yaml"
+        "/dapr/config.yaml",
+        "-components-path",
+        "/dapr/components"
       ]
-    volumes:
-      - "./dapr/components/auction-api/:/dapr/components"
-      - "./dapr/config.yaml:/dapr/config.yaml"
+    network_mode: "service:activity-api"
     depends_on:
-      - auction-api
-      - auction-api-mongo
-    restart: on-failure
+      - placement
+      - activity-db
+      - activity-api
+    restart: always
+  
+  ###################################
+  # Auction API: DB + App + Sidecar #
+  ###################################
+  
+  auction-db:
+    image: "auction-api-mongo-image"
+    ports:
+      - "29999:27017"
+    networks:
+      - dapr-net
+    restart: always
+  
+  auction-api:
+    image: "auction-api"
+    environment:
+      - APP_PORT=8080
+      - SIDECAR_PORT=3500
+      - STATE_STORE_NAME=auction-statestore
+    ports:
+      - "8080:8080"
+    networks:
+      - dapr-net
+    restart: always
+  
+  auction-api-sidecar:
+    image: "daprio/daprd:edge"
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
+      - "./dapr/components/:/dapr/components/"
+    command:
+      [
+        "./daprd",
+        "-app-id",
+        "auction-api",
+        "-app-port",
+        "8080",
+        "-placement-host-address",
+        "placement:50006",
+        "-dapr-http-port",
+        "3500",
+        "-config",
+        "/dapr/config.yaml",
+        "-components-path",
+        "/dapr/components"
+      ]
     network_mode: "service:auction-api"
+    depends_on:
+      - placement
+      - auction-db
+      - auction-api
+    restart: always
+  
   ###################################
   # Session API: DB + App + Sidecar #
   ###################################
-  session-api-redis:
+  
+  session-db:
     image: "redis:alpine"
     ports:
       - "9119:6379"
     networks:
       - dapr-net
+    restart: always
+  
   session-api:
     image: "session-api"
+    environment:
+      - APP_PORT=3000
+      - SIDECAR_PORT=3500
+      - STATE_STORE_NAME=session-statestore
     ports:
       - "3000:3000"
-    depends_on:
-      - placement
     networks:
       - dapr-net
+    restart: always
+  
   session-api-sidecar:
     image: "daprio/daprd:edge"
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
+      - "./dapr/components/:/dapr/components/"
     command:
       [
         "./daprd",
         "-app-id",
-        "sessionapi",
+        "session-api",
         "-app-port",
         "3000",
         "-placement-host-address",
         "placement:50006",
         "-dapr-http-port",
-        "3503",
-        "-components-path",
-        "/dapr/components",
+        "3500",
         "-config",
-        "/dapr/config.yaml"
+        "/dapr/config.yaml",
+        "-components-path",
+        "/dapr/components"
       ]
-    volumes:
-      - "./dapr/components/session-api/:/dapr/components"
-      - "./dapr/config.yaml:/dapr/config.yaml"
-    depends_on:
-      - session-api
-      - session-api-redis
-    restart: on-failure
     network_mode: "service:session-api"
+    depends_on:
+      - placement
+      - session-db
+      - session-api
+    restart: always
+  
   ##################################
   # Auction Web App: App + Sidecar #
   ##################################
+  
   auction-web-app:
     image: "auction-web-app"
+    environment:
+      - SIDECAR_PORT=3500
     ports:
       - "80:80"
-    depends_on:
-      - placement
     networks:
       - dapr-net
+    restart: always
+  
   auction-web-app-sidecar:
     image: "daprio/daprd:edge"
-    ports:
-      - "3504:3504"
+    volumes:
+      - "./dapr/config.yaml:/dapr/config.yaml"
     command:
       [
         "./daprd",
         "-app-id",
-        "webapp",
+        "auction-web-app",
         "-app-port",
         "80",
         "-placement-host-address",
         "placement:50006",
         "-dapr-http-port",
-        "3504",
+        "3500",
         "-config",
         "/dapr/config.yaml"
       ]
-    volumes:
-      - "./dapr/config.yaml:/dapr/config.yaml"
-    depends_on:
-      - auction-web-app
-    restart: on-failure
+    ports:
+      - "3500:3500"
     networks:
       - dapr-net
+    depends_on:
+      - placement
+      - auction-web-app
+    restart: always
+
 networks:
   dapr-net:

@@ -1,14 +1,16 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: mongo
+  name: auction-statestore
 spec:
   type: state.mongodb
   version: v1
   metadata:
   - name: host
-    value: "auction-api-mongo:27017"
+    value: "auction-db:27017"
   - name: databaseName
     value: tag
   - name: collectionName
     value: auctions
+scopes:
+- auction-api

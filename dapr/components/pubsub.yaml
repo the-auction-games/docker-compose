@@ -1,12 +1,12 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: "cache"
+  name: pubsub
 spec:
-  type: state.redis
+  type: pubsub.redis
   version: v1
   metadata:
   - name: redisHost
-    value: session-api-redis:6379
+    value: redis:6379
   - name: redisPassword
     value: ""
