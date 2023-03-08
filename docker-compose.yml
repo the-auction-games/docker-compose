@@ -87,7 +87,9 @@ services:
         "-config",
         "/dapr/config.yaml",
         "-components-path",
-        "/dapr/components"
+        "/dapr/components",
+        "-dapr-http-max-request-size",
+        "16"
       ]
     network_mode: "service:account-api"
     depends_on:
@@ -141,7 +143,9 @@ services:
         "-config",
         "/dapr/config.yaml",
         "-components-path",
-        "/dapr/components"
+        "/dapr/components",
+        "-dapr-http-max-request-size",
+        "16"
       ]
     network_mode: "service:activity-api"
     depends_on:
@@ -193,7 +197,9 @@ services:
         "-config",
         "/dapr/config.yaml",
         "-components-path",
-        "/dapr/components"
+        "/dapr/components",
+        "-dapr-http-max-request-size",
+        "16"
       ]
     network_mode: "service:auction-api"
     depends_on:
@@ -245,7 +251,9 @@ services:
         "-config",
         "/dapr/config.yaml",
         "-components-path",
-        "/dapr/components"
+        "/dapr/components",
+        "-dapr-http-max-request-size",
+        "16"
       ]
     network_mode: "service:session-api"
     depends_on:
@@ -284,7 +292,9 @@ services:
         "-dapr-http-port",
         "3500",
         "-config",
-        "/dapr/config.yaml"
+        "/dapr/config.yaml",
+        "-dapr-http-max-request-size",
+        "16"
       ]
     ports:
       - "3500:3500"
