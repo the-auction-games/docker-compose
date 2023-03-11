@@ -272,6 +272,7 @@ services:
       - SIDECAR_PORT=3500
     ports:
       - "80:80"
+      - "3500:3500"
     networks:
       - dapr-net
     restart: always
@@ -280,6 +281,7 @@ services:
     image: "daprio/daprd:edge"
     volumes:
       - "./dapr/config.yaml:/dapr/config.yaml"
+      - "./dapr/components/:/dapr/components/"
     command:
       [
         "./daprd",
@@ -293,13 +295,12 @@ services:
         "3500",
         "-config",
         "/dapr/config.yaml",
+        "-components-path",
+        "/dapr/components",
         "-dapr-http-max-request-size",
         "16"
       ]
-    ports:
-      - "3500:3500"
-    networks:
-      - dapr-net
+    network_mode: "service:auction-web-app"
     depends_on:
       - placement
       - auction-web-app
