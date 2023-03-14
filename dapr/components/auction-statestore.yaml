@@ -9,8 +9,8 @@ spec:
   - name: host
     value: "auction-db:27017"
   - name: databaseName
-    value: tag
+    value: auction
   - name: collectionName
-    value: auctions
+    value: state
 scopes:
 - auction-api

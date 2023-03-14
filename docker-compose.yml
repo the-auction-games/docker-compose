@@ -47,9 +47,14 @@ services:
   ###################################
 
   account-db:
-    image: "account-api-postgres-image"
+    build:
+      context: ./build/databases
+      dockerfile: ./postgres/Dockerfile
+      args:
+        - DUMP_FILE=account-dump.sql
     environment:
-      PGDATA: /postgres
+      - DB_NAME=account
+      - API_KEY=meh
     ports:
       - "5432:5432"
     networks:
@@ -103,9 +108,14 @@ services:
   ####################################
   
   activity-db:
-    image: "activity-api-postgres-image"
+    build:
+      context: ./build/databases
+      dockerfile: ./postgres/Dockerfile
+      args:
+        - DUMP_FILE=activity-dump.sql
     environment:
-      PGDATA: /postgres
+      - DB_NAME=activity
+      - API_KEY=meh
     ports:
       - "5433:5432"
     networks:
@@ -159,7 +169,14 @@ services:
   ###################################
   
   auction-db:
-    image: "auction-api-mongo-image"
+    build:
+      context: ./build/databases
+      dockerfile: ./mongo/Dockerfile
+      args:
+        - DUMP_DIR=auction
+        - API_KEY=meh
+    environment:
+      - DB_NAME=auction
     ports:
       - "29999:27017"
     networks:
