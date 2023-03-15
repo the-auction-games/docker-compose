@@ -48,7 +48,7 @@ services:
 
   account-db:
     build:
-      context: ./build/databases
+      context: ./build/databases/
       dockerfile: ./postgres/Dockerfile
       args:
         - DUMP_FILE=account-dump.sql
@@ -64,7 +64,9 @@ services:
     restart: always
 
   account-api:
-    image: "account-api"
+    build:
+      context: ./build/applications/account-api/
+      dockerfile: ./Dockerfile
     environment:
       - APP_PORT=8000
       - SIDECAR_PORT=3500
@@ -111,7 +113,7 @@ services:
   
   activity-db:
     build:
-      context: ./build/databases
+      context: ./build/databases/
       dockerfile: ./postgres/Dockerfile
       args:
         - DUMP_FILE=activity-dump.sql
@@ -127,7 +129,9 @@ services:
     restart: always
   
   activity-api:
-    image: "activity-api"
+    build:
+      context: ./build/applications/activity-api/
+      dockerfile: ./Dockerfile
     environment:
       - APP_PORT=8080
       - SIDECAR_PORT=3500
@@ -174,7 +178,7 @@ services:
   
   auction-db:
     build:
-      context: ./build/databases
+      context: ./build/databases/
       dockerfile: ./mongo/Dockerfile
       args:
         - DUMP_DIR=auction
@@ -190,7 +194,9 @@ services:
     restart: always
   
   auction-api:
-    image: "auction-api"
+    build:
+      context: ./build/applications/auction-api/
+      dockerfile: ./Dockerfile
     environment:
       - APP_PORT=8080
       - SIDECAR_PORT=3500
@@ -244,7 +250,9 @@ services:
     restart: always
   
   session-api:
-    image: "session-api"
+    build:
+      context: ./build/applications/session-api
+      dockerfile: ./Dockerfile
     environment:
       - APP_PORT=3000
       - SIDECAR_PORT=3500
@@ -290,7 +298,9 @@ services:
   ##################################
   
   auction-web-app:
-    image: "auction-web-app"
+    build:
+      context: ./build/applications/auction-web-app
+      dockerfile: ./Dockerfile
     environment:
       - SIDECAR_PORT=3500
     ports:
