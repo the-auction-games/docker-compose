@@ -54,7 +54,9 @@ services:
         - DUMP_FILE=account-dump.sql
     environment:
       - DB_NAME=account
-      - API_KEY=meh
+      - DROP_BOX_CLIENT_ID=$DROP_BOX_CLIENT_ID
+      - DROP_BOX_CLIENT_SECRET=$DROP_BOX_CLIENT_SECRET
+      - DROP_BOX_REFRESH_TOKEN=$DROP_BOX_REFRESH_TOKEN
     ports:
       - "5432:5432"
     networks:
@@ -115,7 +117,9 @@ services:
         - DUMP_FILE=activity-dump.sql
     environment:
       - DB_NAME=activity
-      - API_KEY=meh
+      - DROP_BOX_CLIENT_ID=$DROP_BOX_CLIENT_ID
+      - DROP_BOX_CLIENT_SECRET=$DROP_BOX_CLIENT_SECRET
+      - DROP_BOX_REFRESH_TOKEN=$DROP_BOX_REFRESH_TOKEN
     ports:
       - "5433:5432"
     networks:
@@ -174,9 +178,11 @@ services:
       dockerfile: ./mongo/Dockerfile
       args:
         - DUMP_DIR=auction
-        - API_KEY=meh
     environment:
       - DB_NAME=auction
+      - DROP_BOX_CLIENT_ID=$DROP_BOX_CLIENT_ID
+      - DROP_BOX_CLIENT_SECRET=$DROP_BOX_CLIENT_SECRET
+      - DROP_BOX_REFRESH_TOKEN=$DROP_BOX_REFRESH_TOKEN
     ports:
       - "29999:27017"
     networks:
