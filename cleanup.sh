@@ -4,10 +4,7 @@
 # It will remove all the application repos.
 
 # the applications build directory
-APP_DIR=build/applications
-
-# change dir to applications
-cd $APP_DIR
+APP_DIR=./build/applications
 
 # remove all the repos
-rm -rf *
+rm -rf $APP_DIR/*
