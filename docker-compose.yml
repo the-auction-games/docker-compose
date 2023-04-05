@@ -300,9 +300,7 @@ services:
   auction-web-app:
     build:
       context: ./build/applications/auction-web-app
-      dockerfile: ./Dockerfile
-    environment:
-      - SIDECAR_PORT=3500
+      dockerfile: ./Dockerfile-docker-compose
     ports:
       - "2019:80"
       - "3500:3500"
